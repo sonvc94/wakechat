@@ -18,7 +18,7 @@ var colors = [
 
 function connect(event) {
     username = document.querySelector('#name').value.trim();
-    if(username) {
+    if (username) {
         usernamePage.classList.add('hidden');
         chatPage.classList.remove('hidden');
 
@@ -26,8 +26,8 @@ function connect(event) {
         stompClient = Stomp.over(socket);
 
 
-        if (username.includes('vnpay')){
-            stompClient.connect({},onVnpayConnected, onError)
+        if (username.includes('vnpay')) {
+            stompClient.connect({}, onVnpayConnected, onError)
         } else {
             stompClient.connect({}, onConnected, onError);
         }
@@ -51,7 +51,7 @@ function onVnpayConnected() {
 function onConnected() {
     // Subscribe to the Public Topic
     stompClient.subscribe('/topic/public', onMessageReceived);
-
+    stompClient.subscribe('/topic/public', onMessageReceivedNoti);
     // Tell your username to the server
     stompClient.send("/app/chat.addUser",
         {},
@@ -70,7 +70,7 @@ function onError(error) {
 
 function sendMessage(event) {
     var messageContent = messageInput.value.trim();
-    if(messageContent && stompClient) {
+    if (messageContent && stompClient) {
         var chatMessage = {
             sender: username,
             content: messageInput.value,
@@ -88,7 +88,7 @@ function onMessageReceived(payload) {
 
     var messageElement = document.createElement('li');
 
-    if(message.type === 'JOIN') {
+    if (message.type === 'JOIN') {
         messageElement.classList.add('event-message');
         message.content = message.sender + ' joined!';
     } else if (message.type === 'LEAVE') {
@@ -118,6 +118,44 @@ function onMessageReceived(payload) {
 
     messageArea.appendChild(messageElement);
     messageArea.scrollTop = messageArea.scrollHeight;
+
+}
+
+function onMessageReceivedNoti(payload) {
+    var message = JSON.parse(payload.body);
+    if (message.sender == username){
+        return
+    }
+    if (message.type === 'JOIN') {
+        messageElement.classList.add('event-message');
+        message.content = message.sender + ' joined!';
+    } else if (message.type === 'LEAVE') {
+        messageElement.classList.add('event-message');
+        message.content = message.sender + ' left!';
+    } else {
+        messageElement.classList.add('chat-message');
+
+        var avatarElement = document.createElement('i');
+        var avatarText = document.createTextNode(message.sender[0]);
+        avatarElement.appendChild(avatarText);
+        avatarElement.style['background-color'] = getAvatarColor(message.sender);
+
+        messageElement.appendChild(avatarElement);
+
+        var usernameElement = document.createElement('span');
+        var usernameText = document.createTextNode(message.sender);
+        usernameElement.appendChild(usernameText);
+        messageElement.appendChild(usernameElement);
+    }
+    Push.create(message.sender, {
+        body: message.content,
+        icon: '/icon.png',
+        timeout: 2000,
+        onClick: function () {
+            window.focus();
+            this.close();
+        }
+    })
 }
 
 
