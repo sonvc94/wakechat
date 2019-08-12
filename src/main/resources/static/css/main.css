@@ -104,6 +104,10 @@ button.accent {
     color: #fff;
 }
 
+.pad-right {
+    padding-right: 0px;
+}
+
 #username-page {
     text-align: center;
 }
@@ -296,3 +300,4 @@ button.accent {
         font-size: 1.1em;
     }
 }
+
